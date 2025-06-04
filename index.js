@@ -1,18 +1,16 @@
 const express = require("express");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const app = express();
-require('dotenv').config()
+require("dotenv").config();
 
 app.use(cors());
 app.use(express.json());
 
 const port = process.env.PORT || 3000;
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
-const uri =
-  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@alpha10.qadkib3.mongodb.net/?retryWrites=true&w=majority&appName=Alpha10`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@alpha10.qadkib3.mongodb.net/?retryWrites=true&w=majority&appName=Alpha10`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -23,16 +21,38 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    const roomCollection = client.db("roomDB").collection("rooms");
+    const bookingCollection = client.db("roomDB").collection("booking");
+
+    app.get("/rooms", async (req, res) => {
+      const result = await roomCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/room/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await roomCollection.findOne(query);
+      res.send(result);
+    });
+    app.patch("/room/:id", async (req, res) => {
+      const id = req.params.id;
+      const newData = req.body;
+      const updateDocument = {
+        $set: newData,
+      };
+      const query = { _id: new ObjectId(id) };
+      const result = await roomCollection.updateOne(query, updateDocument);
+      res.send(result);
+    });
+
+    app.post("/myBookings", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
   } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
   }
 }
 run().catch(console.dir);
