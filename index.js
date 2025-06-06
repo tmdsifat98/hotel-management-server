@@ -24,6 +24,7 @@ async function run() {
     await client.connect();
     const roomCollection = client.db("roomDB").collection("rooms");
     const bookingCollection = client.db("roomDB").collection("booking");
+    const reviewCollection = client.db("roomDB").collection("review");
 
     app.get("/rooms", async (req, res) => {
       const result = await roomCollection.find().toArray();
@@ -59,6 +60,14 @@ async function run() {
       const result = await bookingCollection.insertOne(booking);
       res.send(result);
     });
+
+    app.delete("/myBookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(filter);
+      res.send(result);
+    });
+
   } finally {
   }
 }
