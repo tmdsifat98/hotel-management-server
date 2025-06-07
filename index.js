@@ -94,12 +94,23 @@ async function run() {
 
       const totalRating = allReviews.reduce((acc, cur) => acc + cur.rating, 0);
       const averageRating = totalRating / allReviews.length;
-      
+
       const bookingQuery = { _id: new ObjectId(roomId) };
       await roomCollection.updateOne(bookingQuery, {
         $set: { rating: averageRating },
       });
 
+      res.send(result);
+    });
+
+    app.get("/reviews", async (req, res) => {
+      const goodReview = await reviewCollection
+        .find()
+        .sort({
+          createdAt: -1,
+        })
+        .toArray();
+      const result = goodReview.filter((review) => review.rating >= 4);
       res.send(result);
     });
   } finally {
