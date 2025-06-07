@@ -67,7 +67,41 @@ async function run() {
       const result = await bookingCollection.deleteOne(filter);
       res.send(result);
     });
+    app.post("/review", async (req, res) => {
+      const { review } = req.body;
+      const { roomId, userEmail } = review;
+      const givenReview = await reviewCollection.findOne({
+        roomId,
+        userEmail,
+      });
+      let result;
+      if (givenReview) {
+        result = await reviewCollection.updateOne(
+          { roomId, userEmail },
+          {
+            $set: {
+              rating: review.rating,
+              comment: review.comment,
+              createdAt: new Date().toLocaleString(),
+            },
+          }
+        );
+      } else {
+        result = await reviewCollection.insertOne(review);
+      }
 
+      const allReviews = await reviewCollection.find({ roomId }).toArray();
+
+      const totalRating = allReviews.reduce((acc, cur) => acc + cur.rating, 0);
+      const averageRating = totalRating / allReviews.length;
+      
+      const bookingQuery = { _id: new ObjectId(roomId) };
+      await roomCollection.updateOne(bookingQuery, {
+        $set: { rating: averageRating },
+      });
+
+      res.send(result);
+    });
   } finally {
   }
 }
