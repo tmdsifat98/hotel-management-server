@@ -21,7 +21,6 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
     const roomCollection = client.db("roomDB").collection("rooms");
     const bookingCollection = client.db("roomDB").collection("booking");
     const reviewCollection = client.db("roomDB").collection("review");
@@ -50,7 +49,6 @@ async function run() {
 
     app.get("/myBookings", async (req, res) => {
       const query = { userEmail: req.query.email };
-      console.log(query);
       const result = await bookingCollection.find(query).toArray();
       res.send(result);
     });
@@ -68,7 +66,7 @@ async function run() {
       res.send(result);
     });
     app.post("/review", async (req, res) => {
-      const { review } = req.body;
+      const review = req.body;
       const { roomId, userEmail } = review;
       const givenReview = await reviewCollection.findOne({
         roomId,
@@ -97,13 +95,13 @@ async function run() {
 
       const bookingQuery = { _id: new ObjectId(roomId) };
       await roomCollection.updateOne(bookingQuery, {
-        $set: { rating: averageRating },
+        $set: { rating: averageRating, totalReview: allReviews.length },
       });
 
       res.send(result);
     });
 
-    app.get("/reviews", async (req, res) => {
+    app.get("/review", async (req, res) => {
       const goodReview = await reviewCollection
         .find()
         .sort({
@@ -111,6 +109,12 @@ async function run() {
         })
         .toArray();
       const result = goodReview.filter((review) => review.rating >= 4);
+      res.send(result);
+    });
+
+    app.get("/room/review/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await reviewCollection.find({ roomId: id }).toArray();
       res.send(result);
     });
   } finally {
