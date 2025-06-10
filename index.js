@@ -28,7 +28,7 @@ async function run() {
     app.get("/rooms", async (req, res) => {
       const min = parseFloat(req.query.minPrice);
       const max = parseFloat(req.query.maxPrice);
-      
+
       let result;
       const allRooms = await roomCollection.find().toArray();
       if (!min && !max) {
@@ -80,6 +80,18 @@ async function run() {
       const result = await bookingCollection.deleteOne(filter);
       res.send(result);
     });
+
+    app.patch("/mybooking/:id", async (req, res) => {
+      const id = req.params.id;
+      const newData = req.body;
+      const updateDocument = {
+        $set: newData,
+      };
+      const query = { roomId: id };
+      const result = await bookingCollection.updateOne(query, updateDocument);
+      res.send(result);
+    });
+
     app.post("/review", async (req, res) => {
       const review = req.body;
       const { roomId, userEmail } = review;
@@ -95,12 +107,15 @@ async function run() {
             $set: {
               rating: review.rating,
               comment: review.comment,
-              createdAt: new Date().toLocaleString(),
+              createdAt: new Date(),
             },
           }
         );
       } else {
-        result = await reviewCollection.insertOne(review);
+        result = await reviewCollection.insertOne({
+          ...review,
+          createdAt: new Date(),
+        });
       }
 
       const allReviews = await reviewCollection.find({ roomId }).toArray();
