@@ -2,7 +2,9 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const app = express();
+const admin = require("firebase-admin");
 require("dotenv").config();
+const serviceAccount = require("./firebaseSecret.json");
 
 app.use(cors());
 app.use(express.json());
@@ -18,6 +20,25 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const verifyFirebaseToken = async (req, res, next) => {
+  const authHeader = req.headers?.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.decoded = decoded;
+  } catch (error) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  next();
+};
 
 async function run() {
   try {
@@ -62,8 +83,13 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/myBookings", async (req, res) => {
-      const query = { userEmail: req.query.email };
+    app.get("/myBookings", verifyFirebaseToken, async (req, res) => {
+      const email = req.query.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
+      const query = { userEmail: email };
       const result = await bookingCollection.find(query).toArray();
       res.send(result);
     });
