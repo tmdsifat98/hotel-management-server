@@ -26,7 +26,22 @@ async function run() {
     const reviewCollection = client.db("roomDB").collection("review");
 
     app.get("/rooms", async (req, res) => {
-      const result = await roomCollection.find().toArray();
+      const min = parseFloat(req.query.minPrice);
+      const max = parseFloat(req.query.maxPrice);
+      
+      let result;
+      const allRooms = await roomCollection.find().toArray();
+      if (!min && !max) {
+        result = allRooms;
+      } else if (min && !max) {
+        result = allRooms.filter((room) => room.pricePerNight >= min);
+      } else if (!min && max) {
+        result = allRooms.filter((room) => room.pricePerNight <= max);
+      } else {
+        result = allRooms.filter(
+          (room) => room.pricePerNight >= min && room.pricePerNight <= max
+        );
+      }
       res.send(result);
     });
 
