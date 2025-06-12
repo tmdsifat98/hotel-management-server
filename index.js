@@ -25,6 +25,7 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+//firebase token verify middleware
 const verifyFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers?.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -42,10 +43,14 @@ const verifyFirebaseToken = async (req, res, next) => {
 
 async function run() {
   try {
+    // database collection
     const roomCollection = client.db("roomDB").collection("rooms");
     const bookingCollection = client.db("roomDB").collection("booking");
     const reviewCollection = client.db("roomDB").collection("review");
+    const faq = client.db("roomDB").collection("faq");
+    const facilities = client.db("roomDB").collection("facilities");
 
+    // filter with price range api
     app.get("/rooms", async (req, res) => {
       const min = parseFloat(req.query.minPrice);
       const max = parseFloat(req.query.maxPrice);
@@ -66,12 +71,15 @@ async function run() {
       res.send(result);
     });
 
+    //find room with room id for room details
     app.get("/room/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await roomCollection.findOne(query);
       res.send(result);
     });
+
+    //booked a room will unavailable for others
     app.patch("/room/:id", async (req, res) => {
       const id = req.params.id;
       const newData = req.body;
@@ -83,6 +91,17 @@ async function run() {
       res.send(result);
     });
 
+    //featured room api
+    app.get("/featuredRooms", async (req, res) => {
+      const result = await roomCollection
+        .find({})
+        .sort({ rating: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+
+    //users own booking find api
     app.get("/myBookings", verifyFirebaseToken, async (req, res) => {
       const email = req.query.email;
       if (email !== req.decoded.email) {
@@ -94,12 +113,14 @@ async function run() {
       res.send(result);
     });
 
+    //room book post api
     app.post("/myBookings", async (req, res) => {
       const booking = req.body;
       const result = await bookingCollection.insertOne(booking);
       res.send(result);
     });
 
+    //delete booking from my booking page
     app.delete("/myBookings/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -107,6 +128,7 @@ async function run() {
       res.send(result);
     });
 
+    //update date from room collection
     app.patch("/mybooking/:id", async (req, res) => {
       const id = req.params.id;
       const newData = req.body;
@@ -118,6 +140,7 @@ async function run() {
       res.send(result);
     });
 
+    //review post
     app.post("/review", async (req, res) => {
       const review = req.body;
       const { roomId, userEmail } = review;
@@ -157,6 +180,7 @@ async function run() {
       res.send(result);
     });
 
+    //get review api
     app.get("/review", async (req, res) => {
       const goodReview = await reviewCollection
         .find()
@@ -168,9 +192,22 @@ async function run() {
       res.send(result);
     });
 
+    //review for eatch room api
     app.get("/room/review/:id", async (req, res) => {
       const id = req.params.id;
       const result = await reviewCollection.find({ roomId: id }).toArray();
+      res.send(result);
+    });
+
+    //faq api
+    app.get("/faq", async (req, res) => {
+      const result = await faq.find().toArray();
+      res.send(result);
+    });
+
+    //facilities api
+    app.get("/facilities", async (req, res) => {
+      const result = await facilities.find().toArray();
       res.send(result);
     });
   } finally {
