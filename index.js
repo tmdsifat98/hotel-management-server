@@ -182,13 +182,11 @@ async function run() {
 
     //get review api
     app.get("/review", async (req, res) => {
-      const goodReview = await reviewCollection
-        .find()
-        .sort({
-          createdAt: -1,
-        })
+      const result = await reviewCollection
+        .find({ rating: { $gte: 4 } })
+        .sort({ createdAt: -1 })
         .toArray();
-      const result = goodReview.filter((review) => review.rating >= 4);
+
       res.send(result);
     });
 

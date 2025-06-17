@@ -55,3 +55,4 @@ The goal of this project is to build a user-friendly and responsive hotel room b
 - **Swiper** – Modern touch slider/carousel for displaying content like reviews
 - **Motion** – Animation library for React powered by Framer Motion
 - **React Awesome Reveal** – Animation library based on Framer Motion to reveal elements on scroll with elegant effects
+- **React CountUp** – An smooth counting animation library in react
