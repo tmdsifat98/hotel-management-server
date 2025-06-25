@@ -63,7 +63,7 @@ You need to clone the server repository.
 ```bash
 https://github.com/tmdsifat98/hotel-management-server
 ```
-Environment variables
+Environment variables (.env)
 ```bash
 DB_USER=hotel-manager
 DB_PASS=k5OfmtcwueriH5vN
