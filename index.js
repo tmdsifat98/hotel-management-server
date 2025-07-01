@@ -5,10 +5,11 @@ const app = express();
 const admin = require("firebase-admin");
 require("dotenv").config();
 
-const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
-  "utf8"
-);
-const serviceAccount = JSON.parse(decoded);
+// const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
+//   "utf8"
+// );
+// const serviceAccount = JSON.parse(decoded);
+const serviceAccount = require("./firebaseSecret.json");
 
 app.use(cors());
 app.use(express.json());
@@ -100,7 +101,7 @@ async function run() {
       const result = await roomCollection
         .find({})
         .sort({ rating: -1 })
-        .limit(6)
+        .limit(8)
         .toArray();
       res.send(result);
     });
