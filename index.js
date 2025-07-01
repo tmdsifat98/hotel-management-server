@@ -54,6 +54,7 @@ async function run() {
     const reviewCollection = client.db("roomDB").collection("review");
     const faq = client.db("roomDB").collection("faq");
     const facilities = client.db("roomDB").collection("facilities");
+    const photoCollection = client.db("roomDB").collection("photo");
 
     // filter with price range api
     app.get("/rooms", async (req, res) => {
@@ -213,6 +214,11 @@ async function run() {
       const result = await facilities.find().toArray();
       res.send(result);
     });
+    app.get("/photos", async (req, res) => {
+      const result = await photoCollection.find().toArray();
+      res.send(result);
+    });
+
   } finally {
   }
 }
